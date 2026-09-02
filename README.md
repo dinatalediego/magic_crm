@@ -6,7 +6,7 @@ Commercial Decision Intelligence foundation for pricing analytics, CRM execution
 
 MAGIC connects a data warehouse to a governed pricing decision loop:
 
-`warehouse -> features -> model -> policy -> recommendation -> CRM -> outcome -> learning`
+`warehouse -> features -> model -> policy -> recommendation -> decision -> CRM -> outcome -> learning`
 
 The first vertical slice intentionally uses a transparent absorption/rules baseline before ML. It can later be challenged by elasticity, survival, willingness-to-pay, uplift, demand or optimization models without changing the decision-memory contract.
 
@@ -15,12 +15,14 @@ The first vertical slice intentionally uses a transparent absorption/rules basel
 - Python 3.11 package under `src/magic`
 - deterministic Absorption Engine
 - constrained Pricing Engine
+- minimal Streamlit Pricing Console for daily use
+- local approve/reject Decision Memory for the console
 - typed domain contracts with Pydantic
 - replaceable Sperant API gateway interface
 - webhook event classification
 - PostgreSQL schemas for Model Registry, Decision Memory, Outcome Memory, CRM Event Log and pricing feature snapshots
 - pytest tests and GitHub Actions CI
-- VS Code defaults and debug launcher
+- VS Code defaults and debug launchers
 - architecture documentation
 
 ## Quick start from VS Code / PowerShell
@@ -31,12 +33,28 @@ cd magic_crm
 git checkout feat/pricing-model-master
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
+python -m pip install -e ".[all]"
 pytest -q
 python -m magic.cli
 ```
 
-You can also press `F5` and select **MAGIC Pricing Demo** after choosing the `.venv` interpreter.
+### Daily Pricing Console
+
+Run:
+
+```powershell
+streamlit run apps/pricing_console.py
+```
+
+Or press `F5` in VS Code and select **MAGIC Pricing Console**.
+
+The minimum daily flow is:
+
+`unit signals -> recommendation -> explanation -> guardrails -> approve/reject -> decision log`
+
+The console currently lets an analyst enter one unit snapshot, review the recommended price, absorption score, confidence, reason codes and applied constraints, then approve or reject the recommendation. Decisions are written locally to `data/local/pricing_decisions.jsonl`, which is ignored by Git. This local log is deliberately temporary: the production target remains `decision_intelligence.pricing_recommendation` in PostgreSQL.
+
+No button in the console changes Sperant prices in v0.1.
 
 ## Database foundation
 
@@ -77,4 +95,4 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Safety boundary
 
-Foundation v0.1 produces recommendations. It does not autonomously mutate CRM prices. CRM execution should remain an explicit, logged decision until the organization has sufficient validation, rollback and monitoring controls.
+Foundation v0.1 produces recommendations and records human decisions. It does not autonomously mutate CRM prices. CRM execution remains an explicit, logged step until the organization has sufficient validation, rollback and monitoring controls.

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Any
+from typing import Any, Self
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, model_validator
@@ -39,10 +39,13 @@ class UnitSnapshot(BaseModel):
     max_price: float | None = Field(default=None, gt=0)
 
     @model_validator(mode="after")
-    def validate_bounds(self) -> "UnitSnapshot":
-        if self.min_price is not None and self.max_price is not None:
-            if self.min_price > self.max_price:
-                raise ValueError("min_price cannot exceed max_price")
+    def validate_bounds(self) -> Self:
+        if (
+            self.min_price is not None
+            and self.max_price is not None
+            and self.min_price > self.max_price
+        ):
+            raise ValueError("min_price cannot exceed max_price")
         return self
 
 
@@ -55,7 +58,7 @@ class AbsorptionResult(BaseModel):
 
 class PricingRecommendation(BaseModel):
     recommendation_id: UUID = Field(default_factory=uuid4)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     project: str
     unit_code: str
     typology: str
